@@ -1,35 +1,15 @@
 <?php
 
-// ========================
-//  DATABASE CONFIG
-// ========================
-const HOST   = 'localhost';   // Server host
-const USER   = 'root';        // MySQL username
-const PWD    = '';        // MySQL password
-const DBNAME = 'salecodb';    // Your DB name (salecodb.sql)
+const HOST = 'localhost'; //Server's IP or localhost
+const USER = 'root'; //DB User ex root
+const PWD = '';
+const DBNAME ='salecodb';
 
-// ========================
-//  MAIN DB CONNECTION FUNCTION
-// ========================
-function Connect()
-{
-    
-    $mysqli = new mysqli(HOST, USER, PWD, DBNAME);
-
-    
-    if ($mysqli->connect_errno) {
-        die('Database Connection Failed: ' . $mysqli->connect_error);
+function Connect(){
+    $conn = new mysqli(HOST, USER, PWD,DBNAME);
+    if($conn->connect_error){
+        die('Error Connection');
+        exit;
     }
-
-    
-    $mysqli->set_charset("utf8");
-
-    return $mysqli;
+    return $conn;
 }
-
-// ========================
-//  GLOBAL CONNECTION INSTANCE
-// ========================
-$mysqli = Connect();
-
-?>

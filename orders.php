@@ -1,106 +1,83 @@
 <?php
-$title = 'Orders';
-
-require_once __DIR__ . '/functions/connectdb.php';
-
-include __DIR__ . '/components/head.php';
-include __DIR__ . '/components/nav-bar.php';
-include __DIR__ . '/components/side-bar.php';
-
-function formatInvoiceDate($datetimeString) {
-    if (!$datetimeString) return '';
-    $ts = strtotime($datetimeString);
-    if ($ts === false) return $datetimeString;
-    return date('d M Y', $ts);
-}
+$title ='Orders';
 ?>
+<!doctype html>
+<html lang="en">
+  <?php include 'components/head.php'; ?>
+  <body>
 
-<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-    <div
-        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Orders</h1>
-       
-        <button class="btn btn-sm btn-outline-secondary">
-            <span data-feather="plus"></span> Add Order
-        </button>
-    </div>
+  <?php include 'components/nav-bar.php'; ?>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="thead-light">
-                <tr>
-                    <th>Invoice #</th>
-                    <th>Customer Name</th>
-                    <th>Date</th>
-                    <th class="text-right">Sub Total</th>
-                    <th class="text-right">Tax</th>
-                    <th class="text-right">Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                if (!isset($mysqli) || !($mysqli instanceof mysqli)) {
-                    echo '<tr><td colspan="6" class="text-danger">Database connection failed: $mysqli is not defined.</td></tr>';
-                } else {
+<div class="container-fluid">
+  <div class="row">
 
-                    $sql = "
-                        SELECT 
-                            i.inv_number,
-                            i.cus_code,
-                            c.cus_fname,
-                            c.cus_lname,
-                            i.inv_date,
-                            i.inv_subtotal,
-                            i.inv_tax,
-                            i.inv_total
-                        FROM invoice i
-                        LEFT JOIN customer c ON i.cus_code = c.cus_code
-                        ORDER BY i.inv_date DESC, i.inv_number DESC
-                    ";
+    <!-- Sidebar Menu -->
+    <?php include 'components/side-bar.php'; ?>
 
-                    $result = $mysqli->query($sql);
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Manage Orders</h1>        
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table table-striped table-sm">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Customer Name</th>
+              <th>Date</th>
+              <th>Sub Total</th>
+              <th>Tax</th>
+              <th>Total</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
 
-                    if ($result) {
-                        if ($result->num_rows == 0) {
-                            echo '<tr><td colspan="6" class="text-center">No orders found.</td></tr>';
-                        } else {
-                            while ($row = $result->fetch_assoc()) {
-                                $invNumber = htmlspecialchars($row['inv_number']);
-                                $custFull  = trim(($row['cus_fname'] ?? '') . ' ' . ($row['cus_lname'] ?? ''));
-                                if ($custFull === '') $custFull = "Unknown Customer";
+          <?php
+            include 'functions/orders.php';
+            $orders = getAllOrders(); // FIXED
+          ?>
 
-                                $dateStr = formatInvoiceDate($row['inv_date']);
+          <tbody>
+          <?php foreach($orders as $order){ ?>
+            <tr>
+              <td><?= $order['inv_number']; ?></td>
 
-                                $subtotal = number_format($row['inv_subtotal'], 2);
-                                $tax      = number_format($row['inv_tax'], 2);
-                                $total    = number_format($row['inv_total'], 2);
+              <td>
+                <?= $order['cus_fname'] . ' ' . $order['cus_lname']; ?>
+              </td>
 
-                                echo "
-                                <tr>
-                                    <td>{$invNumber}</td>
-                                    <td>{$custFull}</td>
-                                    <td>{$dateStr}</td>
-                                    <td class='text-right'>{$subtotal}</td>
-                                    <td class='text-right'>{$tax}</td>
-                                    <td class='text-right'>{$total}</td>
-                                </tr>";
-                            }
-                        }
-                        $result->free();
-                    } else {
-                        echo '<tr><td colspan="6" class="text-danger">Query error: ' . $mysqli->error . '</td></tr>';
-                    }
-                }
-                ?>
-            </tbody>
+              <td>
+                <?= date("d M Y", strtotime($order['inv_date'])); ?>
+              </td>
+
+              <td><?= number_format($order['inv_subtotal'], 2); ?></td>
+              <td><?= number_format($order['inv_tax'], 2); ?></td>
+              <td><?= number_format($order['inv_total'], 2); ?></td>
+
+              <td>
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">                  
+                  <label class="btn btn-primary btn-sm">
+                    <a href="order-edit.php?id=<?= $order['inv_number']; ?>" class="text-white"><i class="fas fa-pen"></i></a>
+                  </label>
+                  <label class="btn btn-danger btn-sm">
+                    <a href="order-delete.php?id=<?= $order['inv_number']; ?>" class="text-white"><i class="fas fa-trash"></i></a>
+                  </label>
+                </div>
+              </td>
+            </tr>
+          <?php } ?>           
+          </tbody>
         </table>
-    </div>
-</main>
+      </div>
+    </main>
+  </div>
+</div>
 
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="../assets/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js"></script>
+<script src="js/dashboard.js"></script>
 
-
-
-<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-<script>
-feather.replace(); 
-</script>
+  </body>
+</html>
